@@ -1,10 +1,57 @@
 package main
 
 import "core:fmt"
+import "core:math/rand"
+import "core:strings"
+import "core:time"
 import rl "vendor:raylib"
 
 screen_center := [2]f32{}
 labubu_pos := [2]f32{}
+
+particles: [dynamic]Particle
+
+Particle :: struct {
+	pos:   [2]f32,
+	val:   int,
+	alpha: f32,
+}
+
+draw_particles :: proc() {
+	for particle in particles {
+		sb := strings.builder_make()
+		defer strings.builder_destroy(&sb)
+
+		strings.write_int(&sb, particle.val)
+		cstr := strings.to_cstring(&sb)
+
+		color := rl.WHITE
+		color.a = u8(particle.alpha)
+		black := rl.BLACK
+		black.a = color.a
+		rl.DrawTextEx(rl.GetFontDefault(), cstr, particle.pos, 20, 2, color)
+	}
+}
+
+PARTICLE_LIFE :: 0.5
+
+upd_particles :: proc() {
+	#reverse for &particle, i in particles {
+		particle.alpha -= 255 / PARTICLE_LIFE * rl.GetFrameTime()
+		if particle.alpha < 0 {
+			unordered_remove(&particles, i)
+		}
+		particle.pos.y -= 50 * rl.GetFrameTime()
+	}
+}
+
+make_particle :: proc(pos: [2]f32) -> Particle {
+	pos := pos
+	pos.y -= 10
+	pos.x -= 2
+	pos += rand.float32_range(-5, 5)
+	return {alpha = 255, val = labubus_per_click, pos = pos}
+}
 
 Labubu :: struct {
 	size:     [2]f32,
@@ -24,19 +71,33 @@ make_labubu :: proc(texture: rl.Texture) -> (labubu: Labubu) {
 	return
 }
 
+labubu_on_click :: proc(labubu: ^Labubu, mouse_pos: [2]f32) {
+	labubu.src_size = BASE_SIZE
+	labubu.dst_size = CLICKED_SIZE
+
+	labubu_counter += labubus_per_click
+
+	append(&particles, make_particle(mouse_pos))
+}
+
 upd_labubu :: proc(labubu: ^Labubu) {
 	screen_center = {f32(rl.GetScreenWidth()) / 2, f32(rl.GetScreenHeight()) / 2}
 	labubu_pos = screen_center - labubu.size / 2
 
+	mouse_pos := rl.GetMousePosition()
+
+	if rl.IsKeyPressed(.SPACE) {
+		labubu_on_click(labubu, mouse_pos)
+	}
+	if rl.IsKeyReleased(.SPACE) {
+		labubu.src_size = CLICKED_SIZE
+		labubu.dst_size = BASE_SIZE
+	}
 	if rl.IsMouseButtonPressed(.LEFT) {
-		mouse_pos := rl.GetMousePosition()
 
 		labubu_rec := rl.Rectangle{labubu_pos.x, labubu_pos.y, labubu.size.x, labubu.size.y}
 		if rl.CheckCollisionPointRec(mouse_pos, labubu_rec) {
-			labubu.src_size = BASE_SIZE
-			labubu.dst_size = CLICKED_SIZE
-
-			labubu_counter += labubus_per_click
+			labubu_on_click(labubu, mouse_pos)
 		}
 	}
 	if rl.IsMouseButtonReleased(.LEFT) {
@@ -56,6 +117,8 @@ upd_labubu :: proc(labubu: ^Labubu) {
 	}
 
 	labubu_pos = screen_center - labubu.size / 2
+
+	upd_particles()
 }
 
 draw_labubu :: proc(labubu: ^Labubu) {
@@ -63,4 +126,6 @@ draw_labubu :: proc(labubu: ^Labubu) {
 
 	dst := rl.Rectangle{labubu_pos.x, labubu_pos.y, labubu.size.x, labubu.size.y}
 	rl.DrawTexturePro(labubu.texture, src, dst, {}, 0.0, rl.WHITE)
+
+	draw_particles()
 }

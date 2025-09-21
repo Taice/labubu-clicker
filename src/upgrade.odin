@@ -33,8 +33,8 @@ upgrades :: proc(bounds: rl.Rectangle) {
 
 	price := click_upgrade_f(click_upgrade)
 
-	buf: [len("Upgrade Click ()") + 5]u8
-	s := cstring(raw_data(fmt.bprintf(buf[:], "Upgrade Click(%d)", click_upgrade)))
+	buf: [len("Upgrade Click ()") + 15]u8
+	s := cstring(raw_data(fmt.bprintf(buf[:], "Upgrade Click(%d)", price)))
 
 	size_x := f32(rl.MeasureText(s, 20))
 	click_size.x = size_x + 4
@@ -42,7 +42,7 @@ upgrades :: proc(bounds: rl.Rectangle) {
 	click_rec := rl.Rectangle{0, 0, click_size.x, click_size.y}
 
 	if button(
-		labubu_counter > click_upgrade_f(click_upgrade),
+		labubu_counter >= click_upgrade_f(click_upgrade),
 		s,
 		"Multiplies labubus-per-click by 2",
 		click_rec,
@@ -64,7 +64,7 @@ abs_diff :: proc(a: $T, b: T) -> T {
 button :: proc(
 	cond: bool,
 	text: cstring,
-	description: cstring,
+	description: string,
 	bounds: rl.Rectangle,
 ) -> (
 	clicked: bool,
@@ -83,20 +83,28 @@ button :: proc(
 
 	rl.DrawRectangleRounded(bounds, 0.5, 10, color)
 
-	mouse_pos := rl.GetMousePosition()
-	desc_rec := rl.Rectangle{mouse_pos.x, mouse_pos.y, 150, 70}
-
-	draw_text_in_bounds(
-		rl.GetFontDefault(),
-		"Big sigma rizz alpha ohio the goat alpha mijhel dzordan",
-		20,
-		2,
-		desc_rec,
-		rl.WHITE,
-	)
-
 	draw_text_centered(rl.GetFontDefault(), text, 20, bounds, rl.WHITE)
+
+	mouse_pos := rl.GetMousePosition()
+
+	if rl.CheckCollisionPointRec(mouse_pos, bounds) {
+		desc_rec := rl.Rectangle{mouse_pos.x, mouse_pos.y, 300, 150}
+
+		draw_description(description, desc_rec)
+	}
+
 	return
+}
+
+draw_description :: proc(text: string, bounds: rl.Rectangle) {
+	rl.DrawRectangleRounded(bounds, 0.15, 10, rl.BLACK)
+	rl.DrawRectangleRoundedLinesEx(bounds, 0.15, 10, 2, rl.WHITE)
+	text_bounds := bounds
+	text_bounds.x += 6
+	text_bounds.width -= 12
+	text_bounds.y += 2
+	text_bounds.height -= 4
+	draw_text_in_bounds(rl.GetFontDefault(), text, 20, 2, text_bounds, rl.WHITE)
 }
 
 draw_text_in_bounds :: proc(
@@ -108,29 +116,24 @@ draw_text_in_bounds :: proc(
 ) {
 	pos := [2]f32{bounds.x, bounds.y}
 	scale := font_size / f32(font.baseSize)
-	//
-	// for c in text {
-	// 	glyph := font.glyphs[rl.GetGlyphIndex(font, rune(c))]
-	//
-	// 	rl.DrawTextCodepoint(font, rune(c), pos, font_size, color)
-	//
-	// 	pos.x += f32(glyph.image.width) * scale + spacing
-	// 	if pos.x > bounds.x + bounds.width {
-	// 		pos.x = bounds.x
-	// 		pos.y += font_size + 1
-	// 	}
-	// }
+
 	words := strings.split(text, " ")
 	defer delete(words)
 
 	for word in words {
 		w := measure_string(font, font_size, spacing, word)
 		if pos.x + w > bounds.x + bounds.width {
+			pos.y += font_size + 1
+			pos.x = bounds.x
 
-		} else {
-			draw_string(font, font_size, spacing, word, pos, rl.WHITE)
-			pos.x += w + spacing
+			if pos.y + font_size > bounds.y + bounds.height {
+				return
+			}
 		}
+		draw_string(font, font_size, spacing, word, pos, rl.WHITE)
+		SPACE_SIZE :: 10
+		pos.x += w + spacing + SPACE_SIZE
+
 	}
 }
 
@@ -141,10 +144,8 @@ measure_string :: proc(font: rl.Font, font_size, spacing: f32, text: string) -> 
 		r := rune(x)
 		glyph := font.glyphs[rl.GetGlyphIndex(font, r)]
 
-		width += f32(glyph.image.width) + spacing
+		width += f32(glyph.image.width) * scale + spacing
 	}
-
-	width -= spacing
 
 	return
 }
@@ -159,15 +160,18 @@ draw_string :: proc(
 	width: f32,
 ) {
 	pos := pos
+
+	scale := font_size / f32(font.baseSize)
+
 	for x in text {
 		r := rune(x)
 		glyph := font.glyphs[rl.GetGlyphIndex(font, r)]
 
 		rl.DrawTextCodepoint(font, x, pos, font_size, color)
 
-		pos.x += f32(glyph.image.width) + spacing
-		width += f32(glyph.image.width) + spacing
+		pos.x += f32(glyph.image.width) * scale + spacing
+		width += f32(glyph.image.width) * scale + spacing
 	}
-	width -= spacing
+
 	return
 }

@@ -1,5 +1,7 @@
 package main
 
+labubu_file := #load("../assets/labubu.png", []u8)
+
 import "core:fmt"
 import "core:math"
 import "core:strings"
@@ -15,13 +17,19 @@ main :: proc() {
 	sb = strings.builder_make()
 	defer strings.builder_destroy(&sb)
 
+	particles = make([dynamic]Particle)
+	defer delete(particles)
+
 	rl.SetConfigFlags({.WINDOW_RESIZABLE})
 	rl.InitWindow(500, 500, "labubu clicker")
 	defer rl.CloseWindow()
 
 	rl.SetTargetFPS(240)
 
-	labubu := make_labubu(rl.LoadTexture("assets/labubu.png"))
+	img := rl.LoadImageFromMemory(".png", raw_data(labubu_file), i32(len(labubu_file)))
+	defer rl.UnloadImage(img)
+	labubu := make_labubu(rl.LoadTextureFromImage(img))
+	defer rl.UnloadTexture(labubu.texture)
 
 	for !rl.WindowShouldClose() {
 		screen_size = {f32(rl.GetScreenWidth()), f32(rl.GetScreenHeight())}
@@ -31,6 +39,7 @@ main :: proc() {
 		rl.BeginDrawing()
 		defer rl.EndDrawing()
 		rl.ClearBackground(rl.BLACK)
+
 
 		draw_labubu(&labubu)
 
