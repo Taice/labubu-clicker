@@ -10,7 +10,7 @@ click_upgrade := 1
 labubus_per_click := 1
 
 click_upgrade_f :: proc(x: int) -> int {
-	return pow_int(3, x - 1) * 3 // 00
+	return pow_int(3, x - 1) * 300
 }
 
 pow_int :: proc(base: int, exp: int) -> (ret: int) {
@@ -41,23 +41,16 @@ upgrades :: proc(bounds: rl.Rectangle) {
 
 	click_rec := rl.Rectangle{0, 0, click_size.x, click_size.y}
 
-	color: rl.Color = rl.RED
-	if (labubu_counter >= price) {
-		color = rl.GREEN
+	if button(
+		labubu_counter > click_upgrade_f(click_upgrade),
+		s,
+		"Multiplies labubus-per-click by 2",
+		click_rec,
+	) {
+		labubu_counter -= price
+		click_upgrade += 1
+		labubus_per_click *= 2
 	}
-	if (rl.CheckCollisionPointRec(rl.GetMousePosition(), click_rec)) {
-		if rl.IsMouseButtonPressed(.LEFT) && labubu_counter >= price {
-			labubu_counter -= price
-			click_upgrade += 1
-            labubus_per_click *= 2
-		} else {
-			color.a -= 50
-		}
-	}
-
-	rl.DrawRectangleRounded(click_rec, 0.5, 10, color)
-
-	draw_text_centered(rl.GetFontDefault(), s, 20, click_rec, rl.WHITE)
 }
 
 abs_diff :: proc(a: $T, b: T) -> T {
@@ -66,4 +59,115 @@ abs_diff :: proc(a: $T, b: T) -> T {
 	} else {
 		return b - a
 	}
+}
+
+button :: proc(
+	cond: bool,
+	text: cstring,
+	description: cstring,
+	bounds: rl.Rectangle,
+) -> (
+	clicked: bool,
+) {
+	color: rl.Color = rl.RED
+	if (cond) {
+		color = rl.GREEN
+	}
+	if (rl.CheckCollisionPointRec(rl.GetMousePosition(), bounds)) {
+		if rl.IsMouseButtonPressed(.LEFT) && cond {
+			clicked = true
+		} else {
+			color.a -= 50
+		}
+	}
+
+	rl.DrawRectangleRounded(bounds, 0.5, 10, color)
+
+	mouse_pos := rl.GetMousePosition()
+	desc_rec := rl.Rectangle{mouse_pos.x, mouse_pos.y, 150, 70}
+
+	draw_text_in_bounds(
+		rl.GetFontDefault(),
+		"Big sigma rizz alpha ohio the goat alpha mijhel dzordan",
+		20,
+		2,
+		desc_rec,
+		rl.WHITE,
+	)
+
+	draw_text_centered(rl.GetFontDefault(), text, 20, bounds, rl.WHITE)
+	return
+}
+
+draw_text_in_bounds :: proc(
+	font: rl.Font,
+	text: string,
+	font_size, spacing: f32,
+	bounds: rl.Rectangle,
+	color: rl.Color,
+) {
+	pos := [2]f32{bounds.x, bounds.y}
+	scale := font_size / f32(font.baseSize)
+	//
+	// for c in text {
+	// 	glyph := font.glyphs[rl.GetGlyphIndex(font, rune(c))]
+	//
+	// 	rl.DrawTextCodepoint(font, rune(c), pos, font_size, color)
+	//
+	// 	pos.x += f32(glyph.image.width) * scale + spacing
+	// 	if pos.x > bounds.x + bounds.width {
+	// 		pos.x = bounds.x
+	// 		pos.y += font_size + 1
+	// 	}
+	// }
+	words := strings.split(text, " ")
+	defer delete(words)
+
+	for word in words {
+		w := measure_string(font, font_size, spacing, word)
+		if pos.x + w > bounds.x + bounds.width {
+
+		} else {
+			draw_string(font, font_size, spacing, word, pos, rl.WHITE)
+			pos.x += w + spacing
+		}
+	}
+}
+
+measure_string :: proc(font: rl.Font, font_size, spacing: f32, text: string) -> (width: f32) {
+	scale := font_size / f32(font.baseSize)
+
+	for x in text {
+		r := rune(x)
+		glyph := font.glyphs[rl.GetGlyphIndex(font, r)]
+
+		width += f32(glyph.image.width) + spacing
+	}
+
+	width -= spacing
+
+	return
+}
+
+draw_string :: proc(
+	font: rl.Font,
+	font_size, spacing: f32,
+	text: string,
+	pos: [2]f32,
+	color: rl.Color,
+) -> (
+	width: f32,
+) {
+	pos := pos
+	for x in text {
+		r := rune(x)
+		glyph := font.glyphs[rl.GetGlyphIndex(font, r)]
+
+		rl.DrawTextCodepoint(font, x, pos, font_size, color)
+
+		pos.x += f32(glyph.image.width) + spacing
+		width += f32(glyph.image.width) + spacing
+	}
+	width -= spacing
+	return
 }
