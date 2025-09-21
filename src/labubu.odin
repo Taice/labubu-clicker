@@ -36,7 +36,7 @@ upd_labubu :: proc(labubu: ^Labubu) {
 			labubu.src_size = BASE_SIZE
 			labubu.dst_size = CLICKED_SIZE
 
-			labubu_counter += click_upgrade
+			labubu_counter += labubus_per_click
 		}
 	}
 	if rl.IsMouseButtonReleased(.LEFT) {

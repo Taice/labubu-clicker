@@ -19,7 +19,7 @@ main :: proc() {
 	rl.InitWindow(500, 500, "labubu clicker")
 	defer rl.CloseWindow()
 
-	rl.SetTargetFPS(60)
+	rl.SetTargetFPS(240)
 
 	labubu := make_labubu(rl.LoadTexture("assets/labubu.png"))
 
@@ -46,7 +46,7 @@ main :: proc() {
 			rl.WHITE,
 		)
 
-		draw_upgrades({0, 0, labubu_pos.x, screen_size.y})
+		upgrades({0, 0, labubu_pos.x, screen_size.y})
 	}
 }
 
@@ -61,6 +61,8 @@ draw_text_centered :: proc(
 	size := rl.MeasureTextEx(font, text, font_size, f32(font.glyphPadding) + 1)
 
 	top_left := (bs - size) / 2
+	top_left.x = math.round(top_left.x)
+	top_left.y = math.round(top_left.y)
 
 	rl.DrawTextEx(font, text, top_left, font_size, f32(font.glyphPadding) + 1, color)
 }
