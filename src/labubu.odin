@@ -75,7 +75,7 @@ labubu_on_click :: proc(labubu: ^Labubu, mouse_pos: [2]f32) {
 	labubu.src_size = BASE_SIZE
 	labubu.dst_size = CLICKED_SIZE
 
-	labubu_counter += labubus_per_click
+	labubu_counter += f32(labubus_per_click)
 
 	append(&particles, make_particle(mouse_pos))
 }

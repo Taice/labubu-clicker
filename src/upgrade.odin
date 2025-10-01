@@ -1,74 +1,46 @@
 package main
 
 import "core:fmt"
-import "core:math"
 import "core:strings"
-
 import rl "vendor:raylib"
 
-click_upgrade := 1
-labubus_per_click := 1
-
-click_upgrade_f :: proc(x: int) -> int {
-	return pow_int(3, x - 1) * 300
-}
-
-pow_int :: proc(base: int, exp: int) -> (ret: int) {
-	ret = 1
-
-	for x in 0 ..< exp {
-		ret *= base
-	}
-	return
-}
-
-BUTTON_SIZE :: 20.0
-
-upgrades :: proc(bounds: rl.Rectangle) {
-	// rl.DrawRectangleLinesEx(bounds, 1, rl.WHITE)
-
-	click_pos: [2]f32
-
-	click_size := [2]f32{100, 20}
-
-	price := click_upgrade_f(click_upgrade)
-
-	buf: [len("Upgrade Click ()") + 15]u8
-	s := cstring(raw_data(fmt.bprintf(buf[:], "Upgrade Click(%d)", price)))
-
-	size_x := f32(rl.MeasureText(s, 20))
-	click_size.x = size_x + 4
-
-	click_rec := rl.Rectangle{0, 0, click_size.x, click_size.y}
-
-	if button(
-		labubu_counter >= click_upgrade_f(click_upgrade),
-		s,
-		"Multiplies labubus-per-click by 2",
-		click_rec,
-	) {
-		labubu_counter -= price
-		click_upgrade += 1
-		labubus_per_click *= 2
-	}
-}
-
-abs_diff :: proc(a: $T, b: T) -> T {
-	if a > b {
-		return a - b
-	} else {
-		return b - a
-	}
-}
-
-button :: proc(
-	cond: bool,
-	text: cstring,
+Upgrade :: struct {
+	count:       int,
+	condition:   proc(_: ^Upgrade) -> bool,
+	on_click:    proc(_: ^Upgrade),
+	update:      proc(_: ^Upgrade),
+	price:       int,
+	lps:         int,
 	description: string,
-	bounds: rl.Rectangle,
-) -> (
-	clicked: bool,
-) {
+	name:        cstring,
+}
+
+upgrades: []Upgrade = {click_upgrade, tiktok_upgrade}
+
+do_upgrades :: proc() {
+	bounds := rl.Rectangle{0, 0, 200, 30}
+	for &upg in upgrades {
+		upg.update(&upg)
+		if button(upg.condition(&upg), upg.name, upg.price, bounds) {
+			upg.on_click(&upg)
+		}
+		bounds.y += bounds.height + 2
+	}
+	bounds = rl.Rectangle{0, 0, 200, 30}
+	for &upg in upgrades {
+		mpos := rl.GetMousePosition()
+		if rl.CheckCollisionPointRec(mpos, bounds) {
+			desc_rec := rl.Rectangle{mpos.x, mpos.y, 350, 0}
+			desc_rec.height = measure_text_height(rl.GetFontDefault(), 20, 2, upg.description, 350)
+            desc_rec.width += 8
+            desc_rec.height += 4
+			draw_description(upg.description, desc_rec)
+		}
+		bounds.y += bounds.height + 2
+	}
+}
+
+button :: proc(cond: bool, text: cstring, price: int, bounds: rl.Rectangle) -> (clicked: bool) {
 	color: rl.Color = rl.RED
 	if (cond) {
 		color = rl.GREEN
@@ -83,15 +55,23 @@ button :: proc(
 
 	rl.DrawRectangleRounded(bounds, 0.5, 10, color)
 
-	draw_text_centered(rl.GetFontDefault(), text, 20, bounds, rl.WHITE)
+	text_rec := bounds
+	text_rec.width = bounds.width / 2
+
+	draw_text_centered(rl.GetFontDefault(), text, 20, text_rec, rl.WHITE)
+
+	price_rec := text_rec
+	price_rec.x += price_rec.width
+
+	buf: [20]u8
+
+	s := fmt.bprintf(buf[:], "[%d]", price)
+
+	cs := cstring(raw_data(s))
+
+	draw_text_centered(rl.GetFontDefault(), cs, 20, price_rec, rl.WHITE)
 
 	mouse_pos := rl.GetMousePosition()
-
-	if rl.CheckCollisionPointRec(mouse_pos, bounds) {
-		desc_rec := rl.Rectangle{mouse_pos.x, mouse_pos.y, 300, 150}
-
-		draw_description(description, desc_rec)
-	}
 
 	return
 }
@@ -135,6 +115,33 @@ draw_text_in_bounds :: proc(
 		pos.x += w + spacing + SPACE_SIZE
 
 	}
+}
+
+measure_text_height :: proc(
+	font: rl.Font,
+	font_size, spacing: f32,
+	text: string,
+	max_x: f32,
+) -> (
+	height: f32,
+) {
+	pos: [2]f32
+	scale := font_size / f32(font.baseSize)
+
+	words := strings.split(text, " ")
+	defer delete(words)
+
+	for word in words {
+		w := measure_string(font, font_size, spacing, word)
+		if pos.x + w > max_x {
+			pos.y += font_size + 1
+			pos.x = 0
+		}
+		SPACE_SIZE :: 10
+		pos.x += w + spacing + SPACE_SIZE
+	}
+	fmt.println(pos.y)
+	return pos.y + font_size
 }
 
 measure_string :: proc(font: rl.Font, font_size, spacing: f32, text: string) -> (width: f32) {

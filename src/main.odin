@@ -7,7 +7,9 @@ import "core:math"
 import "core:strings"
 import rl "vendor:raylib"
 
-labubu_counter: int = 0
+labubu_counter: f32 = 0
+
+labubus_per_click: int = 1
 
 screen_size: [2]f32
 
@@ -44,7 +46,7 @@ main :: proc() {
 		draw_labubu(&labubu)
 
 		clear(&sb.buf)
-		strings.write_int(&sb, labubu_counter)
+		strings.write_int(&sb, int(labubu_counter))
 		labubu_count := strings.to_cstring(&sb)
 
 		draw_text_centered(
@@ -55,7 +57,7 @@ main :: proc() {
 			rl.WHITE,
 		)
 
-		upgrades({0, 0, labubu_pos.x, screen_size.y})
+		do_upgrades()
 	}
 }
 
@@ -70,6 +72,7 @@ draw_text_centered :: proc(
 	size := rl.MeasureTextEx(font, text, font_size, f32(font.glyphPadding) + 1)
 
 	top_left := (bs - size) / 2
+	top_left += {bounds.x, bounds.y}
 	top_left.x = math.round(top_left.x)
 	top_left.y = math.round(top_left.y)
 
