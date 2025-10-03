@@ -1,6 +1,5 @@
 package main
 
-import "core:os"
 labubu_file := #load("../assets/labubu.png", []u8)
 
 import "core:fmt"
@@ -9,20 +8,16 @@ import "core:strings"
 import rl "vendor:raylib"
 
 labubu_counter: f32 = 0
+
 labubus_per_click: int = 1
+
 screen_size: [2]f32
-settings := default_settings
+
+sb: strings.Builder
 
 main :: proc() {
-	args := os.args
-	if len(args) > 1 {
-		ok: bool
-		settings, ok = load_settings(args[1])
-
-		if !ok {
-			return
-		}
-	}
+	sb = strings.builder_make()
+	defer strings.builder_destroy(&sb)
 
 	particles = make([dynamic]Particle)
 	defer delete(particles)
@@ -43,13 +38,10 @@ main :: proc() {
 
 		upd_labubu(&labubu)
 
-		if rl.IsKeyPressed(settings[0]) || rl.IsKeyPressed(settings[1]) {
-			labubu_on_click(&labubu, rl.GetMousePosition())
-		}
-
 		rl.BeginDrawing()
 		defer rl.EndDrawing()
 		rl.ClearBackground(rl.BLACK)
+
 
 		draw_labubu(&labubu)
 
