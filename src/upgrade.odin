@@ -66,11 +66,8 @@ button :: proc(cond: bool, text: cstring, price: int, bounds: rl.Rectangle) -> (
 	price_rec.x += price_rec.width
 
 	buf: [20]u8
-
 	s := fmt.bprintf(buf[:], "[%d]", price)
-
 	cs := cstring(raw_data(s))
-
 	draw_text_centered(rl.GetFontDefault(), cs, 20, price_rec, rl.WHITE)
 
 	mouse_pos := rl.GetMousePosition()
@@ -79,8 +76,13 @@ button :: proc(cond: bool, text: cstring, price: int, bounds: rl.Rectangle) -> (
 }
 
 draw_description :: proc(text: string, bounds: rl.Rectangle) {
-	rl.DrawRectangleRounded(bounds, 0.15, 10, rl.BLACK)
+	bounds := bounds
+	text_width := measure_string(rl.GetFontDefault(), 20, 2, text)
+	if text_width < bounds.width {
+		bounds.width = text_width
+	}
 	rl.DrawRectangleRoundedLinesEx(bounds, 0.15, 10, 2, rl.WHITE)
+	rl.DrawRectangleRounded(bounds, 0.15, 10, rl.BLACK)
 	text_bounds := bounds
 	text_bounds.x += 6
 	text_bounds.width -= 12
