@@ -4,36 +4,38 @@ import "core:fmt"
 import "core:strings"
 import rl "vendor:raylib"
 
+UpgradeKind :: enum {
+	Click,
+	Tiktok,
+}
+
 Upgrade :: struct {
 	count:       int,
-	condition:   proc(_: ^Upgrade) -> bool,
-	on_click:    proc(_: ^Upgrade),
-	update:      proc(_: ^Upgrade),
 	price:       int,
 	lps:         int,
 	description: string,
 	name:        cstring,
+	kind:        UpgradeKind,
 }
 
 upgrades: []Upgrade = {click_upgrade, tiktok_upgrade}
 
 do_upgrades :: proc() {
 	bounds := rl.Rectangle{0, 0, 200, 30}
+
 	for &upg in upgrades {
-		upg.update(&upg)
-		if button(upg.condition(&upg), upg.name, upg.price, bounds) {
-			upg.on_click(&upg)
-		}
+		do_upgrade(&upg, bounds)
 		bounds.y += bounds.height + 2
 	}
+
 	bounds = rl.Rectangle{0, 0, 200, 30}
 	for &upg in upgrades {
 		mpos := rl.GetMousePosition()
 		if rl.CheckCollisionPointRec(mpos, bounds) {
 			desc_rec := rl.Rectangle{mpos.x, mpos.y, 350, 0}
 			desc_rec.height = measure_text_height(rl.GetFontDefault(), 20, 2, upg.description, 350)
-            desc_rec.width += 8
-            desc_rec.height += 4
+			desc_rec.width += 8
+			desc_rec.height += 4
 			draw_description(upg.description, desc_rec)
 		}
 		bounds.y += bounds.height + 2
@@ -140,7 +142,6 @@ measure_text_height :: proc(
 		SPACE_SIZE :: 10
 		pos.x += w + spacing + SPACE_SIZE
 	}
-	fmt.println(pos.y)
 	return pos.y + font_size
 }
 
@@ -181,4 +182,20 @@ draw_string :: proc(
 	}
 
 	return
+}
+
+do_upgrade :: proc(upgrade: ^Upgrade, button_bounds: rl.Rectangle) {
+	switch upgrade.kind {
+	case .Tiktok:
+		tiktok_update(upgrade)
+		if button(tiktok_condition(upgrade), upgrade.name, upgrade.price, button_bounds) {
+			buy_tiktok(upgrade)
+		}
+	case .Click:
+		click_update(upgrade)
+		if button(tiktok_condition(upgrade), upgrade.name, upgrade.price, button_bounds) {
+			buy_click(upgrade)
+		}
+	}
+
 }

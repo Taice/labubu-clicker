@@ -7,9 +7,6 @@ tiktok_upgrade: Upgrade = {
 	count       = 0,
 	price       = 1000,
 	lps         = 0,
-	on_click    = buy_tiktok,
-	condition   = tiktok_condition,
-	update      = tiktok_update,
 	name        = "Tiktok",
 	description = "Make a Tiktok page",
 }

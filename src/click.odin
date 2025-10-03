@@ -4,13 +4,11 @@ import "core:math"
 import rl "vendor:raylib"
 
 click_upgrade: Upgrade = {
-	count       = 0,
+	count       = 1,
 	price       = 300,
 	lps         = 0,
-	on_click    = buy_click,
-	condition   = click_condition,
-	update      = click_update,
 	name        = "Click",
+	kind        = .Click,
 	description = "Multiplies labubus-per-click by 2 and a half",
 }
 

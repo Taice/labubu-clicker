@@ -45,9 +45,8 @@ main :: proc() {
 
 		draw_labubu(&labubu)
 
-		clear(&sb.buf)
-		strings.write_int(&sb, int(labubu_counter))
-		labubu_count := strings.to_cstring(&sb)
+		buf: [20]u8
+		labubu_count := cstring(raw_data(fmt.bprint(buf[:], labubu_counter)))
 
 		draw_text_centered(
 			rl.GetFontDefault(),
